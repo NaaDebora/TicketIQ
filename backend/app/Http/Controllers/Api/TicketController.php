@@ -30,4 +30,17 @@ class TicketController extends Controller
             'data' => $ticket,
         ], 201);
     }
+
+    public function index()
+    {
+        $tickets = Ticket::with([
+            'user',
+            'category',
+            'aiAnalysis'
+        ])->latest()->get();
+
+        return response()->json([
+            'data' => $tickets
+        ]);
+    }
 }
