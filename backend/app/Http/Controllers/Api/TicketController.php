@@ -43,4 +43,17 @@ class TicketController extends Controller
             'data' => $tickets
         ]);
     }
+
+    public function show($id)
+    {
+        $ticket = Ticket::with([
+            'user',
+            'category',
+            'aiAnalysis'
+        ])->findOrFail($id);
+
+        return response()->json([
+            'data' => $ticket
+        ]);
+    }
 }
