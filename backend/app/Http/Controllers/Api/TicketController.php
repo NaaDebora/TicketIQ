@@ -53,6 +53,8 @@ class TicketController extends Controller
                 'category_suggested' => $analysis['category'] ?? null,
                 'priority_suggested' => $analysis['priority'] ?? null,
                 'confidence' => $analysis['confidence'] ?? null,
+                'possible_cause' => $analysis['possible_cause'] ?? null,
+                'suggested_solution' => $analysis['suggested_solution'] ?? null,
                 'raw_response' => $analysis,
             ]
         );
