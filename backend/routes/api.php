@@ -8,3 +8,4 @@ Route::get('/categories', [CategoryController::class, 'index']);
 Route::post('/tickets', [TicketController::class, 'store']);
 Route::get('/tickets', [TicketController::class, 'index']);
 Route::get('/tickets/{id}', [TicketController::class, 'show']);
+Route::post('/tickets/{id}/analyze', [TicketController::class, 'analyze']);

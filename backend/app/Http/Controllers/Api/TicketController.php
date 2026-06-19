@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Ticket;
 use Illuminate\Http\Request;
+use App\Models\Category;
+use App\Models\TicketAiAnalysis;
+use App\Services\GeminiService;
 
 class TicketController extends Controller
 {
@@ -54,6 +57,43 @@ class TicketController extends Controller
 
         return response()->json([
             'data' => $ticket
+        ]);
+    }
+
+    public function analyze($id, GeminiService $geminiService)
+    {
+        $ticket = Ticket::findOrFail($id);
+
+        $categories = Category::pluck('name')->toArray();
+
+        $analysis = $geminiService->analyzeTicket(
+            $ticket->title,
+            $ticket->description,
+            $categories
+        );
+
+        $category = Category::whereRaw('LOWER(name) = ?', [
+            strtolower($analysis['category'] ?? 'Outro')
+        ])->first();
+
+        $ticket->update([
+            'category_id' => $category?->id,
+            'priority' => $analysis['priority'] ?? null,
+        ]);
+
+        TicketAiAnalysis::updateOrCreate(
+            ['ticket_id' => $ticket->id],
+            [
+                'category_suggested' => $analysis['category'] ?? null,
+                'priority_suggested' => $analysis['priority'] ?? null,
+                'confidence' => $analysis['confidence'] ?? null,
+                'raw_response' => $analysis,
+            ]
+        );
+
+        return response()->json([
+            'message' => 'Ticket analisado com sucesso.',
+            'data' => $ticket->load(['user', 'category', 'aiAnalysis']),
         ]);
     }
 }
