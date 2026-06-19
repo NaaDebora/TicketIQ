@@ -11,7 +11,8 @@ use App\Services\GeminiService;
 
 class TicketController extends Controller
 {
-    public function store(Request $request)
+
+    public function store(Request $request, GeminiService $geminiService)
     {
         $validated = $request->validate([
             'user_id' => ['required', 'exists:users,id'],
@@ -28,9 +29,37 @@ class TicketController extends Controller
             'category_id' => null,
         ]);
 
+        $categories = Category::pluck('name')->toArray();
+
+        $analysis = $geminiService->analyzeTicket(
+            $ticket->title,
+            $ticket->description,
+            $categories
+        );
+
+        $category = Category::whereRaw('LOWER(name) = ?', [
+            strtolower($analysis['category'] ?? '')
+        ])->first();
+
+        $ticket->update([
+            'category_id' => $category?->id,
+            'priority' => $analysis['priority'] ?? null,
+            'status' => 'aguardando_retorno_usuario',
+        ]);
+
+        TicketAiAnalysis::updateOrCreate(
+            ['ticket_id' => $ticket->id],
+            [
+                'category_suggested' => $analysis['category'] ?? null,
+                'priority_suggested' => $analysis['priority'] ?? null,
+                'confidence' => $analysis['confidence'] ?? null,
+                'raw_response' => $analysis,
+            ]
+        );
+
         return response()->json([
-            'message' => 'Ticket criado com sucesso.',
-            'data' => $ticket,
+            'message' => 'Ticket criado e analisado com sucesso.',
+            'data' => $ticket->load(['user', 'category', 'aiAnalysis']),
         ], 201);
     }
 
