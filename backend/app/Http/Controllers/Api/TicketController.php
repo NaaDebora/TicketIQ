@@ -127,4 +127,33 @@ class TicketController extends Controller
             'data' => $ticket->load(['user', 'category', 'aiAnalysis']),
         ]);
     }
+
+    public function feedback(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'resolved' => ['required', 'boolean'],
+        ]);
+
+        $ticket = Ticket::findOrFail($id);
+
+        if ($validated['resolved']) {
+            $ticket->update([
+                'status' => 'resolvido',
+            ]);
+
+            return response()->json([
+                'message' => 'Chamado resolvido com sucesso.',
+                'data' => $ticket->load(['user', 'category', 'aiAnalysis']),
+            ]);
+        }
+
+        $ticket->update([
+            'status' => 'encaminhado',
+        ]);
+
+        return response()->json([
+            'message' => 'Chamado encaminhado para atendimento humano.',
+            'data' => $ticket->load(['user', 'category', 'aiAnalysis']),
+        ]);
+    }
 }
