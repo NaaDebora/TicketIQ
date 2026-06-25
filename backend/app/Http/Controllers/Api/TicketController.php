@@ -134,8 +134,7 @@ class TicketController extends Controller
             'resolved' => ['required', 'boolean'],
         ]);
 
-        $ticket = Ticket::findOrFail($id);
-
+        $ticket = Ticket::with(['user', 'category.department', 'aiAnalysis'])->findOrFail($id);
         if ($validated['resolved']) {
             $ticket->update([
                 'status' => 'resolvido',
@@ -143,7 +142,7 @@ class TicketController extends Controller
 
             return response()->json([
                 'message' => 'Chamado resolvido com sucesso.',
-                'data' => $ticket->load(['user', 'category', 'aiAnalysis']),
+                'data' => $ticket->fresh()->load(['user', 'category.department', 'aiAnalysis']),
             ]);
         }
 
@@ -152,8 +151,9 @@ class TicketController extends Controller
         ]);
 
         return response()->json([
-            'message' => 'Chamado encaminhado para atendimento humano.',
-            'data' => $ticket->load(['user', 'category', 'aiAnalysis']),
+            'message' => 'Chamado encaminhado para o departamento responsável.',
+            'department' => $ticket->category?->department,
+            'data' => $ticket->fresh()->load(['user', 'category.department', 'aiAnalysis']),
         ]);
     }
 }
